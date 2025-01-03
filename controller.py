@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from db import SessionDep
 from dto import BookDto
 from sqlmodel import select
@@ -45,8 +45,11 @@ def deleteBook(id: int, session: SessionDep):
     return {"message": "Book deleted successfully"}
 
 @book_router.post("/books/{id}/borrow")
-def borrowBook(id: int, session: SessionDep):
+def borrowBook(id: int, session: SessionDep, resp: Response):
     book = session.get(Book, id)
+    if not book.availability:
+        resp.status_code = 404
+        return {"message": "Book is already borrowed"}
     book.availability = False
     session.commit()
     session.refresh(book)
